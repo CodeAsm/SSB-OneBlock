@@ -118,23 +118,21 @@ public final class BlocksListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onOneBlockPhysics(BlockPhysicsEvent e) {
-        if(e.getChangedType() != Material.AIR)
+	Island island = SuperiorSkyblockAPI.getIslandAt(e.getBlock().getLocation());
+
+	if (island == null || !plugin.getPhasesHandler().canHaveOneBlock(island))
             return;
 
-        Location blockLocation = e.getBlock().getLocation();
-        int islandDistance = SuperiorSkyblockAPI.getSettings().getMaxIslandSize() * 3;
-        Location middleIslandLocation = plugin.getSettings().blockOffset.negate().applyToLocation(blockLocation);
+	 Location oneBlockLocation = plugin.getSettings().blockOffset.applyToLocation(
+                island.getCenter(World.Environment.NORMAL).subtract(0.5, 0, 0.5));
 
-        if (middleIslandLocation.getBlockX() % islandDistance != 0 || middleIslandLocation.getBlockZ() % islandDistance != 0)
+	if (!oneBlockLocation.equals(e.getBlock().getLocation()))
             return;
 
-        Island island = SuperiorSkyblockAPI.getIslandAt(middleIslandLocation);
-
-        if (island == null || !plugin.getPhasesHandler().canHaveOneBlock(island))
-            return;
-
-        Bukkit.getScheduler().runTaskLater(plugin.getJavaPlugin(), () ->
-                plugin.getPhasesHandler().runNextAction(island, null), 20L);
+	if (e.getChangedType() == Material.AIR) {
+            Bukkit.getScheduler().runTaskLater(plugin.getJavaPlugin(), () ->
+                    plugin.getPhasesHandler().runNextAction(island, null), 20L);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
